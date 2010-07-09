@@ -7,12 +7,14 @@ url = Url.new('http://www.osculati.com/cat/Scheda.aspx?id=')
 url.setCategory('246')
 
 retriever = Osculati.new()
-retriever.output( CsvOutput.new('/Users/angeljusto/Desktop/osculati', 10))
-retriever.getElements('nombre', 'p.titoloSerie strong')
-retriever.getElements('descripcion', 'p.descrizioneSerie')
-retriever.getElements('caracteristicas', 'table.tabdati tr')
+retriever.output( CsvOutput.new('/Users/angeljusto/Desktop/osculati', retriever.getDataArray))
+# parseamos primero la tabla de productos individuales para poder añadir luego los compartidos por todos
+retriever.addElements('table.tabdati')
+retriever.addElements('p.titoloSerie strong')
+retriever.addElements('p.descrizioneSerie')
 
 retriever.parsePage(url.getProductUrl())
+retriever.output.write
 
 #products.each { |p|
 #    osculati.getProductUrl()

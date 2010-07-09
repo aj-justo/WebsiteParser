@@ -13,10 +13,11 @@ class Retriever
       @login = true
       @logged = false
     end
-  
-    @elements = {}
-#    if (website.nil? or !website.class 'Url') then rise 'No se ha pasado un objeto Url' end
-#    @website = website;
+#    elementos html a buscar en la pagina a parsear
+    @elements = []
+#    array de datos econtrados para pasar a output object
+#  compuesto a modo de filas para csv etc
+    @dataArray = []
   end
 
   private
@@ -65,41 +66,40 @@ class Retriever
   end
   
   public
-  def getElements(name, elementCss)
-    if name.nil? or elementCss.nil? then raise 'nombre y elemento son imprescindibles' end
-    @elements[name] = elementCss
+  def addElements(elementCss)
+    if elementCss.nil? then raise 'elemento imprescindible' end
+    @elements.push elementCss
   end
   
   private
   def parseElements
     if @page.nil? then raise 'primero hay que parsear la pagina' end
     if @elements.nil? then raise 'primero hay que definir elementos a parsear con getElements' end
-    @elements.each_pair{|key,value|
+    @elements.each{|value|
       @page.search(value).each{|el|
-          getData(el)
+         getElementData(el)
       }
-    }
+    }   
   end
 
+# overloading en subclases especificas para cada web
   private
-  def getData(element)
-    outputData(Nokogiri.parse(element).inner_text)
-  end
-  
-  public 
-  def output(outputObject)
-    @outputObject = outputObject
+  def getElementData(element)
+    @dataArray.push element.inner_text
   end
   
   public
-  def getOutput
-    @outputObject
+  def getDataArray
+    @dataArray
   end
   
-  private
-  def outputData(dataArray) 
-    @outputObject.write(dataArray)
+  public 
+  def output(outputObject=nil)
+    unless outputObject.nil? then @outputObject = outputObject end
+    @outputObject
   end
+
+  
   
 end
 

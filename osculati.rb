@@ -3,23 +3,16 @@ require 'retriever.rb'
 
 # extiende retriever para www.osculati.com
 class Osculati < Retriever 
-  
-  private
-  def setVars
-    @setVars = true
-    @productData = {}
-    @productsKeys = []
-  end
 
 
   private
-  def getData(elements) 
-    if @setVars.nil? then setVars end
-      
+  def getElementData(elements) 
     if elements.search(('tr')) then
-      getProductsTableData(elements)
+      getProductsTableData(elements).each{|row|
+          @dataArray.push row
+        }        
     else
-      getSharedData(elements)
+#     @dataArray.push getSharedData(elements)
     end
   end
   
@@ -28,48 +21,55 @@ class Osculati < Retriever
   private
   def getSharedData(elements)
     if elements.to_s.include?('titoloSerie') then
-      @productsKeys.push 'nombre'
-      @product.push(elements.inner_text)
-    else if elements.to_s.include?('descrizioneSerie') then
-      @productsKeys.push 'descripcion'
-      @product.push(elements.inner_text)
+      productsSharedKeys.push 'nombre'
+      productsSharedData.push(elements.inner_text)
+    else
+      if elements.to_s.include?('descrizioneSerie') then
+        productsSharedKeys.push 'descripcion'
+        productsSharedData.push(elements.inner_text)
+      end
     end
-    if @productsKeys.length == getOutput.getRowLength then outputData(@productskeys) end
   end
   
-  
+#  datos individuales de cada producto guardados en una tabla
+#  distinguimos entre la primera tr de cabeceras y el resto datos de cada producto
   private
   def getProductsTableData(elements)
-    tds = elements.search('td')
-    
-    if tds.length==0 then # es fila cabecera (th)
-      ths = elements.search('th')
-      unless ths.length==0 then 
-        getKeys(ths.slice(1,ths.length)) 
+    found = []
+    trs = elements.search('tr')
+    trs.each{|tr|
+      if tr.search('td').length>1 then
+        tds = tr.search('td')
+        found.push getValues(tds.slice(1, tds.length))
+      else
+        if tr.search('th').length>1 then
+          ths = tr.search('th')
+          found.push getKeys(ths.slice(1,ths.length))
+        end
       end
-      
-    else # es fila datos (td)
-      getValues(tds.slice(1, tds.length))
-    end
+    }
+    found
   end
   
   
   private
   def getKeys(tr)
+    keys=[]
     i=0
     tr.each{|th|
-      @productsKeys[i] = th.inner_text
+      keys[i] = th.inner_text
       i=i+1
     }
-    if @productsKeys.length == getOutput.getRowLength then outputData(@productskeys) end
+    keys
   end
   
   private
   def getValues(tr)
+    values=[]
     tr.each{|td|
-        @product.push(td.inner_text)
-    }
-    outputData(@product)
+        values.push(td.inner_text)
+    }    
+    values
   end
   
 end
