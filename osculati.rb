@@ -4,31 +4,51 @@ require 'retriever.rb'
 # extiende retriever para www.osculati.com
 class Osculati < Retriever 
 
+  private
+  def setTimes
+    @times=1
+  end
 
   private
   def getElementData(elements) 
-    if elements.search(('tr')) then
-      getProductsTableData(elements).each{|row|
+    
+#    estos son los productos individuales, en una tabla
+#     solo queremos cojer estos datos una vez, para el primer idioma
+    if elements.search('tr').length>1 then
+      if @times.nil? then
+        setTimes
+        getProductsTableData(elements).each{|row|
           @dataArray.push row
-        }        
+        }      
+      end     
+#    estos son los datos compartidos por todos los productos (nombre, descripcion)
+#   queremos cojerlos para todos los idiomas (siempre)
     else
-#     @dataArray.push getSharedData(elements)
+#      añadimos valores compartidos a todos los productos
+      @dataArray[1,@dataArray.length].each{|row|
+        row.push getSharedData(elements)
+      }
+#      añadimos los nombres (nombre ó descripción) a la primera linea del array      
+      @dataArray[0].push getSharedKeys(elements)<<'_'<<@currentLanguage   
     end
   end
   
   
   
   private
-  def getSharedData(elements)
+  def getSharedData(elements)   
+      elements.inner_text
+  end
+  
+  private
+  def getSharedKeys(elements)
     if elements.to_s.include?('titoloSerie') then
-      productsSharedKeys.push 'nombre'
-      productsSharedData.push(elements.inner_text)
-    else
-      if elements.to_s.include?('descrizioneSerie') then
-        productsSharedKeys.push 'descripcion'
-        productsSharedData.push(elements.inner_text)
-      end
+      t = 'nombre'
     end
+    if elements.to_s.include?('descrizioneSerie') then
+      t = 'descripcion'
+    end
+    t
   end
   
 #  datos individuales de cada producto guardados en una tabla
@@ -70,6 +90,21 @@ class Osculati < Retriever
         values.push(td.inner_text)
     }    
     values
+  end
+  
+  private
+  def setLanguage(language)
+    page = @agent.get @url
+#    print page.inspect
+    form = page.forms.first
+    form.__EVENTTARGET = language
+    form.__EVENTARGUMENT = ''
+    form.__VIEWSTATE = form.__VIEWSTATE
+    form.__EVENTVALIDATION = form.__EVENTVALIDATION
+#      form.securityToken = form.securityToken
+#    form.add_field!('submit', '1')
+    # debugger
+     @agent.submit(form)
   end
   
 end

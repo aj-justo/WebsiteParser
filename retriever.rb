@@ -18,6 +18,9 @@ class Retriever
 #    array de datos econtrados para pasar a output object
 #  compuesto a modo de filas para csv etc
     @dataArray = []
+    
+    @languages = []
+    @currentLanguage = ''
   end
 
   private
@@ -54,16 +57,42 @@ class Retriever
     # else @login = 1
   end
   
+  
+  
+  public
+  def addLanguage(lang)
+    @languages.push lang
+  end
+  
+#  overload para las distintas webs - ¿podemos hacer algo generico via get?
+  private
+  def setLanguage(language)
+    
+  end
+  
   public
   def parsePage(url)
-    if @loginRequired and !@logged then
-      begin 
-        login(@loginUrl, @loginUser, @loginPass)
-      end
-    end
-    @page = @agent.get url 
-    parseElements
+    @url = url
+    if @languages.length>0 then
+      @languages.each{|lang|
+        @page = setLanguage(lang)
+        @currentLanguage = lang
+        parseElements
+      }
+    end   
   end
+  
+#  private
+#  def getPage(url)
+#    if @loginRequired and !@logged then
+#      begin 
+#        login(@loginUrl, @loginUser, @loginPass)
+#      end
+#    end
+#    @page = @agent.get url 
+#    parseElements
+#  end
+  
   
   public
   def addElements(elementCss)
