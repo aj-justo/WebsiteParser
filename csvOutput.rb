@@ -2,20 +2,27 @@
 class CsvOutput
    
   public
-  def initialize(path,dataArray)
+  def initialize(path)
     require 'csv'
     @fecha = Time.now
     @csvFile = File.open(path<<@fecha.to_s<<".csv", 'wb')
-    @dataArray = dataArray
+    @cache = []
   end
   
   
-  public
-  def write
-#    print @dataArray.inspect
+  private
+  def write(@dataArray)
     @dataArray.each{|row|
-#    print row.inspect
+      puts 'row en csv write:'
+      puts row.inspect
       writeRow(row)
+    }
+  end
+  
+  private
+  def addToCache(dataArray)
+    dataArray.each{|row|
+      @cache.push row
     }
   end
   
@@ -26,6 +33,8 @@ class CsvOutput
         csv << row
     end
   end
+  
+
   
   
 end

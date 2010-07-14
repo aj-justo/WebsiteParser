@@ -1,26 +1,30 @@
 require 'rubygems'
+I_KNOW_I_AM_USING_AN_OLD_AND_BUGGY_VERSION_OF_LIBXML2 = 1
 require 'mechanize' 
 require 'nokogiri'
+require "jcode"
 
 class Retriever
     
   public
-  def initialize(login=nil)
+  def initialize(output=nil)
     @agent = getMechanizeAgent
-    if login.nil? then
-      @login=false 
-    else
-      @login = true
-      @logged = false
-    end
+    
 #    elementos html a buscar en la pagina a parsear
     @elements = []
 #    array de datos econtrados para pasar a output object
 #  compuesto a modo de filas para csv etc
-    @dataArray = []
-    
+    @dataArray = []   
     @languages = []
-    @currentLanguage = ''
+    @currentLanguage = ''    
+#    css references for links to follow 
+    @followLinks = []    
+    @url   
+    @parsedPages = []
+    
+    unless output.nil? 
+      @output = output
+    end
   end
 
   private
@@ -34,9 +38,7 @@ class Retriever
   public
   def login(loginUrl, loginUser, loginPass)
     @logged = false
-    # if(@login.defined? == nil) then
-    #         @login = get_mechanize_agent
-    #       end      
+
     if (loginUrl.nil? or loginUser.nil? or loginPass.nil?) then rise 'Se requiere url, usuario y clave' end
     @loginUrl = loginUrl
     @loginUser = loginUser
@@ -47,18 +49,14 @@ class Retriever
     form = page.forms.first
     form.admin_name = loginUser
     form.admin_pass = loginPass
-#      form.securityToken = form.securityToken
     form.add_field!('submit', '1')
-    # debugger
     @agent.submit form 
     @logged = true
     @agent
-    # if(agent.url.contains? login.php) not-being-logged->error
-    # else @login = 1
+
   end
   
-  
-  
+    
   public
   def addLanguage(lang)
     @languages.push lang
@@ -70,28 +68,61 @@ class Retriever
     
   end
   
+  
   public
   def parsePage(url)
+    puts 'url en parsePage:'
+    puts url
+    if url.is_a?(String)
+      url = Url.new(url)
+    end
     @url = url
-    if @languages.length>0 then
-      @languages.each{|lang|
+    @page = @agent.get @url.url
+    # solo queremos cojer los idiomas si estamos en pagina de productos
+    if elementsInPage then
+      if @languages.length>0 and !pageAlreadyParsed?(@url.url) then parseLanguagesPages end
+    else
+      parseElements
+    end
+  end
+  
+  
+  private
+  def logParsedPage(url)
+    @parsedPages.push url
+  end
+  
+  
+  private
+  def pageAlreadyParsed?(url)
+    @parsedPages.include? url 
+  end
+  
+  public
+  def getParsedPages
+    @parsedPages
+  end
+  
+  
+  private 
+  def elementsInPage
+    @elements.each { |e|
+      if @page.search(e).length>0
+        return 1
+      end
+      return 0
+    }
+  end
+  
+  private
+  def parseLanguagesPages
+     @languages.each{|lang|
         @page = setLanguage(lang)
         @currentLanguage = lang
         parseElements
       }
-    end   
+      
   end
-  
-#  private
-#  def getPage(url)
-#    if @loginRequired and !@logged then
-#      begin 
-#        login(@loginUrl, @loginUser, @loginPass)
-#      end
-#    end
-#    @page = @agent.get url 
-#    parseElements
-#  end
   
   
   public
@@ -105,13 +136,21 @@ class Retriever
     if @page.nil? then raise 'primero hay que parsear la pagina' end
     if @elements.nil? then raise 'primero hay que definir elementos a parsear con getElements' end
     @elements.each{|value|
+      # puts 'buscando elemento en parseElements:'
+      # puts value
       @page.search(value).each{|el|
          getElementData(el)
       }
-    }   
+    } 
+    # guardamos lo encontrado, reseteamos array de datos y guardamos log de url
+    @output.write(@dataArray)
+    @dataArray=[]
+    logParsedPage(@url.url)
+    #   comprobamos si la misma pagina tiene links para follow
+    checkLinksToFollow
   end
 
-# overloading en subclases especificas para cada web
+# overloaded en subclases especificas para cada web
   private
   def getElementData(element)
     @dataArray.push element.inner_text
@@ -122,12 +161,35 @@ class Retriever
     @dataArray
   end
   
-  public 
-  def output(outputObject=nil)
-    unless outputObject.nil? then @outputObject = outputObject end
-    @outputObject
-  end
+  # public 
+  # def output(outputObject=nil)
+  #   unless outputObject.nil? then @outputObject = outputObject end
+  #   @outputObject
+  # end
 
+
+#  METODOS PARA SEGUIR ENLACES O GUARDARLOS A ARRAY
+  public
+  def addFollow(cssElement)
+    @followLinks.push cssElement
+  end
+  
+  private 
+  def checkLinksToFollow
+    page = @agent.get @url.url
+    @followLinks.each{|link|
+      page.search(link).each{|l|
+        followLink(l.attributes['href'])
+      }
+    }
+  end
+  
+  
+  private 
+  def followLink(link)  
+    # print link
+    parsePage(@url.getNewDomainUrl(link.inner_text))
+  end
   
   
 end

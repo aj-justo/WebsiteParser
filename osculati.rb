@@ -4,23 +4,60 @@ require 'retriever.rb'
 # extiende retriever para www.osculati.com
 class Osculati < Retriever 
 
+  # 
+  # private
+  # def setDataGotForPage(url)
+  #   if @dataGot.nil? then @dataGot = [] end
+  #   @dataGot.push url
+  # end
+  # 
+  # private
+  # def resetDataGot
+  #   @dataGot = []
+  # end
+  
   private
-  def setTimes
-    @times=1
+  def addFoundKeys(keys)
+    if @foundKeys.nil? then @foundKeys=[] end
+    if keys.is_a(String) and !inFoundKeys?(keys)
+      @foundKeys.push key
+    end
+    if keys.is_a(Array)
+      keys.each{|key|
+        unless inFoundKeys?(key)
+          @foundKeys.push key
+        end
+      }
   end
+  
+  private
+  def inFoundKeys?(key)
+    @foundKeys.include?(key)
+  end
+  
+  private
+  def writeKeys
+    if @keys.nil?
+      @keys = ['ID', 'CAT', 'SUBCAT']
+      @languages.each{|lang|
+        @keys.push 'NOMBRE_'<<lang
+        @keys.push 'DESCRIPCION_'<<lang
+      }
+      @output.write(@keys)
+    end
+  end
+  
 
   private
   def getElementData(elements) 
-    
+    writeKeys
 #    estos son los productos individuales, en una tabla
-#     solo queremos cojer estos datos una vez, para el primer idioma
+#   solo queremos cojer estos datos una vez para cada pagina
     if elements.search('tr').length>1 then
-      if @times.nil? then
-        setTimes
-        getProductsTableData(elements).each{|row|
+
+      getProductsTableData(elements).each{|row|
           @dataArray.push row
-        }      
-      end     
+      }       
 #    estos son los datos compartidos por todos los productos (nombre, descripcion)
 #   queremos cojerlos para todos los idiomas (siempre)
     else
@@ -28,8 +65,6 @@ class Osculati < Retriever
       @dataArray[1,@dataArray.length].each{|row|
         row.push getSharedData(elements)
       }
-#      añadimos los nombres (nombre ó descripción) a la primera linea del array      
-      @dataArray[0].push getSharedKeys(elements)<<'_'<<@currentLanguage   
     end
   end
   
@@ -64,7 +99,9 @@ class Osculati < Retriever
       else
         if tr.search('th').length>1 then
           ths = tr.search('th')
-          found.push getKeys(ths.slice(1,ths.length))
+          # found.push getKeys(ths.slice(1,ths.length))
+          # los keys los grabamos todos juntos al final
+          # addFoundKeys(ths.slice(1,ths.length))
         end
       end
     }
@@ -94,7 +131,9 @@ class Osculati < Retriever
   
   private
   def setLanguage(language)
-    page = @agent.get @url
+    page = @agent.get @url.url
+    puts 'url en setLanguage:'
+    puts @url.url
 #    print page.inspect
     form = page.forms.first
     form.__EVENTTARGET = language
