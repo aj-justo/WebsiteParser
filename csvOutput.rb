@@ -10,13 +10,13 @@ class CsvOutput
   end
   
   
-  private
-  def write(@dataArray)
-    @dataArray.each{|row|
-      puts 'row en csv write:'
-      puts row.inspect
-      writeRow(row)
-    }
+  public
+  def write(dataArray)
+    # dataArray.each{|row|
+    #   puts 'row en csv write:'
+    #   puts row.inspect
+      writeRow(dataArray)
+    # }
   end
   
   private

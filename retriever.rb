@@ -14,7 +14,9 @@ class Retriever
     @elements = []
 #    array de datos econtrados para pasar a output object
 #  compuesto a modo de filas para csv etc
-    @dataArray = []   
+#MODIFICADO: filas identificadas por un ID de producto: ['33.39.2']=['33.39.2','a', '01', 'alskdfj']
+    @dataArray = {}  
+    @keysArray = [] 
     @languages = []
     @currentLanguage = ''    
 #    css references for links to follow 
@@ -121,7 +123,15 @@ class Retriever
         @currentLanguage = lang
         parseElements
       }
-      
+      if @outputKeys.nil? 
+        puts 'Escribiendo cabeceras:'
+        puts @keysArray.inspect
+        @output.write(@keysArray)
+        @outputKeys = true
+      end
+      @dataArray.each_pair{|key,row| @output.write(row) }     
+      @dataArray={}
+      logParsedPage(@url.url) 
   end
   
   
@@ -143,9 +153,6 @@ class Retriever
       }
     } 
     # guardamos lo encontrado, reseteamos array de datos y guardamos log de url
-    @output.write(@dataArray)
-    @dataArray=[]
-    logParsedPage(@url.url)
     #   comprobamos si la misma pagina tiene links para follow
     checkLinksToFollow
   end
