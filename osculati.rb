@@ -6,94 +6,109 @@ class Osculati < Retriever
   
   # keys array: [id, cat, subcat, nombre_idioma1, descripcion_idioma1, nombre_idioma2, descripcion_idioma2, ... ]
   private
-  def writeKeys
-      
+  def writeKeys     
     if @keysArray.nil? or !@keysArray.include?('ID') # primer idioma
         @keysArray = ['ID', 'CAT', 'SUBCAT']
     end # esto una vez por cada idioma
+    
+    unless @keysArray.include?('CAT_'<<@currentLanguage)
+      @keysArray.push 'CAT_'<<@currentLanguage
+    end 
+    unless @keysArray.include?('SUBCAT_'<<@currentLanguage)
+      @keysArray.push 'SUBCAT_'<<@currentLanguage
+    end
     unless @keysArray.include?('NOMBRE_'<<@currentLanguage)
       @keysArray.push 'NOMBRE_'<<@currentLanguage
     end
     unless @keysArray.include?('DESCRIPCION_'<<@currentLanguage)
       @keysArray.push 'DESCRIPCION_'<<@currentLanguage
-    end
-    
+    end    
   end
   
   
   private
   def getCategory
+    cat = ''
     @page.search('#ctl00_ContentPlaceHolder1_hypGruppo').each{|l|
-      puts 'category:'
-      puts l.inner_text
-      # l.inner_text.match(/^([0-9]+) – (.+)$/)
-      # cat = $1<<$2
       cat = l.inner_text
     }
-    
+    cat
+  end
+  
+  private
+  def getCategoryId(category=nil)
+    if category.nil?
+      category = getCategory
+    end
+    id = category.match(/([0-9]+)/)
+    id = $1
+  end
+  
+  private
+  def getCategoryName(category=nil)
+    if category.nil?
+      category=getCategory
+    end
+    name = category.match(/([a-z]+)/i)
+    name = $1
   end
   
   private
   def getSubCategory
+    subcat = ''
     @page.search('#ctl00_ContentPlaceHolder1_hypSottoGruppo').each{|l|
-      puts 'href en getSubcategory:'
-      puts l.attributes['href'].inner_text
-      
+      # puts 'href en getSubcategory:'
+      # puts l.attributes['href'].inner_text      
       subcat = l.attributes['href'].inner_text.match(/([0-9]+)$/)
       subcat = $1
       subcat<<' - '<<l.inner_text      
     }
+    # puts 'subcategoria id:'
+    # puts getCategoryId(subcat)
+    subcat
   end
   
-  # private
-  #  def logDoneUrls
-  #    if @doneUrls.nil? then @doneUrls = [] end
-  #    @doneUrls[@url.url].push @currentLanguage
-  #  end
-  #  
-  #  private
-  #  def languagesDone?
-  #    done=0
-  #    @languages.each{|l|
-  #      if @doneUrls[@url.url].include?(l) then done+=1 end
-  #    }
-  #    done.eql?(@languages.length)
-  #  end
-  #  
-  #  private
-  #  def urlDone?
-  #    @doneUrls.keys.include?(@url.url)
-  #  end
+  private
+  def getSubCategoryId
+    subcat = getSubCategory
+    getCategoryId(subcat)
+  end
+  
+  private
+  def getSubCategoryName(subcategory=nil)
+    if subcategory.nil?
+      subcat=getSubCategory
+    end
+    name = subcat.match(/([a-z]+)/i)
+    name = $1
+  end
+  
 
   private
   def getElementData(elements) 
-    # guardamos los ids de los productos encontrados en pagina
-    
-    # puts 'dataArray al comienzo de getElementData:'
-    # puts @dataArray.inspect
+    # array de cabecera para csv
     writeKeys
-    puts 'current language:'
-    puts @currentLanguage
-    puts 'keysArray:'
-    puts @keysArray.inspect
-    # recoje los ths de la tabla
+    # keys de la tabla de caracteristicas del producto, que hay que poner por cada idioma
+    # añadiendo a las descripciones, una por linea (abajo)
     descripcionKeys = getKeys(elements)
 
     trs = elements.search('tr')
-    if trs.length>1 then      
+    if trs.length>1 then
+      # puts 'elementos en getelementdata:'
+      # puts elements.to_s
+
       # cada fila es un producto, a pasar en una fila también a csv      
-      trs.each{|tr|
-        
+      trs.each{|tr|       
         tds = tr.search('td')
         unless tds.length==0
           producto = [] 
           # una vez por url/producto, no se repiten por language
           id= getId(tr)
-          if @idsEnPagina.nil? then @idsEnPagina = [] end
-          @idsEnPagina.push id
+          # if @idsEnPagina.nil? then @idsEnPagina = [] end
+          # @idsEnPagina.push id
           producto.push id
-          producto.push getCategory
-          producto.push getSubCategory
+          producto.push getCategoryId
+          producto.push getSubCategoryId
 
           nombre = ' '
           producto.push nombre # nombre, en blanco, se recoje posteriormente en elementos shared
@@ -111,8 +126,8 @@ class Osculati < Retriever
           }    
           descripcion = descripcion.join("\n")
           producto.push descripcion
-          puts 'producto en getElementData:'
-          puts producto.inspect
+          # puts 'producto en getElementData:'
+          # puts producto.inspect
           # producto ya hecho, solo añadimos descripcion a la fila correspondiente (nombre abajo en shared)
          if @dataArray[id].nil?
              @dataArray[id] = producto
@@ -135,28 +150,35 @@ class Osculati < Retriever
       # getProductsTableData(elements).each{|row|
       #           @dataArray.push row
       #       }       
-#    estos son los datos compartidos por todos los productos (nombre, descripcion)
+#    estos son los datos compartidos por todos los productos (cat, subcat, nombre, descripcion)
 #   queremos cojerlos para todos los idiomas (siempre)
     else
+      
+      # cat
+      cat = getCategoryName
+      index = @keysArray.index('CAT_'<<@currentLanguage)
+      @dataArray.each_pair{|id,row|
+        row[index] = cat
+      }
+      
+      # subcat
+      subcat = getSubCategoryName
+      index = @keysArray.index('SUBCAT_'<<@currentLanguage)
+      @dataArray.each_pair{|id,row|
+        row[index] = subcat
+      }
+      
       # nombre
       if elements.to_s.include?('titoloSerie')
           index = @keysArray.index('NOMBRE_'<<@currentLanguage)
           @dataArray.each_pair{|id,row|
-            # puts 'row[index] de dataArray:'
-            # puts row.inspect
             row[index] = elements.inner_text
           }        
       end
       # descripcion
       if elements.to_s.include?('descrizioneSerie')
-        # puts 'array de keys en descripcion:'
-        # puts @keysArray.inspect
         index = @keysArray.index('DESCRIPCION_'<<@currentLanguage)
-        # puts 'index en descripcion:'
-        # puts index
         @dataArray.each_pair{|id, row|
-          # puts 'row dentro loop en descripcion:'
-          # puts row.inspect
           if row[index].nil?
             row[index] = elements.inner_text
           else
@@ -178,9 +200,8 @@ class Osculati < Retriever
       ths.slice(2,ths.length).each{|th|
         keys.push th.inner_text
       }
-      puts 'keys en getelementdata:'
-      puts keys.inspect
-      
+      # puts 'keys en getelementdata:'
+      # puts keys.inspect      
       keys
     end
   end
@@ -291,8 +312,8 @@ class Osculati < Retriever
   private
   def setLanguage(language)
     page = @agent.get @url.url
-    puts 'url en setLanguage:'
-    puts @url.url
+    # puts 'url en setLanguage:'
+    # puts @url.url
 #    print page.inspect
     form = page.forms.first
     form.__EVENTTARGET = language

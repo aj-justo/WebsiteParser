@@ -83,8 +83,10 @@ class Retriever
     # solo queremos cojer los idiomas si estamos en pagina de productos
     if elementsInPage then
       if @languages.length>0 and !pageAlreadyParsed?(@url.url) then parseLanguagesPages end
-    else
-      parseElements
+    else # solo seguirá enlaces
+      if !pageAlreadyParsed?(@url.url)
+        parseElements
+      end
     end
   end
   
@@ -124,8 +126,8 @@ class Retriever
         parseElements
       }
       if @outputKeys.nil? 
-        puts 'Escribiendo cabeceras:'
-        puts @keysArray.inspect
+        # puts 'Escribiendo cabeceras:'
+        # puts @keysArray.inspect
         @output.write(@keysArray)
         @outputKeys = true
       end
@@ -136,21 +138,32 @@ class Retriever
   
   
   public
-  def addElements(elementCss)
+  def addElements(elementCss, elementsPerPage=nil)
+    if elementsPerPage.nil? then elementsPerPage = 1 end
     if elementCss.nil? then raise 'elemento imprescindible' end
-    @elements.push elementCss
+    # @elements.push elementCss
+    @elements.push [elementCss, elementsPerPage]
   end
   
   private
   def parseElements
     if @page.nil? then raise 'primero hay que parsear la pagina' end
     if @elements.nil? then raise 'primero hay que definir elementos a parsear con getElements' end
-    @elements.each{|value|
+    @elements.each{|element|
       # puts 'buscando elemento en parseElements:'
       # puts value
-      @page.search(value).each{|el|
-         getElementData(el)
-      }
+      found = @page.search(element[0])
+      if found.length>0
+          if found.length>1
+            # puts 'found mayor que 1'
+            # puts found.length
+          end
+        for i in 1..element[1] do
+            # puts 'llamando geElementData con:'
+            # puts found[0].to_s.slice(0,100)
+            getElementData(found[0])
+        end
+      end
     } 
     # guardamos lo encontrado, reseteamos array de datos y guardamos log de url
     #   comprobamos si la misma pagina tiene links para follow
