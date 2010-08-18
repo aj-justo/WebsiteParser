@@ -1,22 +1,25 @@
 # extiende retriever para usar output a csv
 class CsvOutput
    
+   attr_reader :path
+   attr_reader :separator
+   attr_reader :csvFile
+   
   public
-  def initialize(path)
+  def initialize(path, separator=nil)
     require 'csv'
+    if separator.nil? then separator = '|' end
+    @separator = separator
     @fecha = Time.now
-    @csvFile = File.open(path<<@fecha.to_s<<".csv", 'wb')
+    @csvFile = File.open(path, 'ab')
     @cache = []
+    @path = path
   end
   
   
   public
   def write(dataArray)
-    # dataArray.each{|row|
-    #   puts 'row en csv write:'
-    #   puts row.inspect
       writeRow(dataArray)
-    # }
   end
   
   private
@@ -28,13 +31,22 @@ class CsvOutput
   
   private
   def writeRow(row)
-    CSV::Writer.generate(@csvFile, '|') do |csv|
-#        puts "writing: #{row[0]}"
-        csv << row
+  	puts row
+    CSV::Writer.generate(@csvFile, @separator) do |csv|
+    	csv << row unless row.nil?
     end
   end
   
-
+  public
+  def getStringFromCsv
+    file = File.open(@path, 'r')
+    contents = file.read
+    contents
+  end
   
+	public 
+	def close 
+		@csvFile.close
+	end
   
 end

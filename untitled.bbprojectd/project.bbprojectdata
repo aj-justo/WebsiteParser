@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>HierarchyData</key>
+	<array>
+		<string>AA413D7E-AE62-4190-9914-14B3850462F1</string>
+	</array>
+	<key>ProjectItems</key>
+	<dict>
+		<key>AA413D7E-AE62-4190-9914-14B3850462F1</key>
+		<dict>
+			<key>ItemData</key>
+			<dict>
+				<key>AliasData</key>
+				<data>
+				AAAAAAG8AAIAAQxNYWNpbnRvc2ggSEQAAAAAAAAAAAAA
+				AAAAAADFqaTeSCsAAAAwo/sXbGFuYXV0aWNhUHJvZHVj
+				dEdyYWJiZXIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+				AAAAAAAAAAAAAAAAAAAAAEFp+shaTX4AAAAAAAAAAP//
+				//8AAAkgAAAAAAAAAAAAAAAAAAAAEFBST1lFQ1RPU19B
+				UFRBTkEAEAAIAADFqZbOAAAAEQAIAADIWjFeAAAAAQAM
+				ADCj+wAKhPsAAHxTAAIARk1hY2ludG9zaCBIRDpVc2Vy
+				czphbmdlbGp1c3RvOlBST1lFQ1RPU19BUFRBTkE6bGFu
+				YXV0aWNhUHJvZHVjdEdyYWJiZXIADgAwABcAbABhAG4A
+				YQB1AHQAaQBjAGEAUAByAG8AZAB1AGMAdABHAHIAYQBi
+				AGIAZQByAA8AGgAMAE0AYQBjAGkAbgB0AG8AcwBoACAA
+				SABEABIAOVVzZXJzL2FuZ2VsanVzdG8vUFJPWUVDVE9T
+				X0FQVEFOQS9sYW5hdXRpY2FQcm9kdWN0R3JhYmJlcgAA
+				EwABLwAAFQACABH//wAA
+				</data>
+				<key>FileURL</key>
+				<string>file://localhost/Users/angeljusto/PROYECTOS_APTANA/lanauticaProductGrabber/</string>
+				<key>RelativePath</key>
+				<string>./</string>
+				<key>TypeID</key>
+				<string>_CFileLocator</string>
+				<key>Version</key>
+				<integer>1</integer>
+			</dict>
+			<key>ItemName</key>
+			<string>lanauticaProductGrabber</string>
+			<key>ItemType</key>
+			<string>FolderReference</string>
+		</dict>
+	</dict>
+	<key>com.barebones.DocumentFormatVersion</key>
+	<integer>5</integer>
+	<key>com.barebones.DocumentType</key>
+	<string>Project</string>
+</dict>
+</plist>

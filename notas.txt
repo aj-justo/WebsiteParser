@@ -1,0 +1,1 @@
+guardar en log url de urls with no elements para que no las vuelva a rastrear, tarda mucho en hacerlo

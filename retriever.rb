@@ -5,6 +5,10 @@ require 'nokogiri'
 require "jcode"
 
 class Retriever
+  
+  attr_accessor :logOutput
+  attr_accessor :directOutputLogging
+  attr_accessor :urlsWithNoElements
     
   public
   def initialize(output=nil)
@@ -73,33 +77,79 @@ class Retriever
   
   public
   def parsePage(url)
-    puts 'url en parsePage:'
-    puts url
     if url.is_a?(String)
       url = Url.new(url)
     end
     @url = url
-    @page = @agent.get @url.url
-    # solo queremos cojer los idiomas si estamos en pagina de productos
-    if elementsInPage then
-      if @languages.length>0 and !pageAlreadyParsed?(@url.url) then parseLanguagesPages end
-    else # solo seguirá enlaces
-      if !pageAlreadyParsed?(@url.url)
-        parseElements
+    puts @url.url
+    # puts pageAlreadyParsed?(@url.url)   
+    unless pageAlreadyParsed?(@url.url)      
+      @page = @agent.get @url.url
+      #  antes de parsear  pagina comprobamos si es una pagina que contiene solo links to follow
+      if UrlsWithNoElements?(@url.url)
+        checkLinksToFollow
+      else
+        checkLinksToFollow
+        if @languages.length>0
+          parseLanguagesPages
+        else 
+          parseElements
+        end
       end
+    else
+      puts 'url ya hecha:'
+      puts @url.url
     end
   end
   
   
   private
-  def logParsedPage(url)
-    @parsedPages.push url
+  def UrlsWithNoElements?(url=nil)
+    if url.nil? then url = @url.url end
+    r=nil
+    unless @urlsWithNoElements.nil?
+      @urlsWithNoElements.each{|u|
+        if u.match(/^%([^%]+)%$/)
+          u = $1
+        end
+        if url.include?(u) then r = 1 end
+      }
+    end
+    r
+  end
+  
+  # se debe llamar en init para dar el path
+  public
+  def previousUrlLog(path=nil)
+    if !path.nil? and @previousUrlArray.nil?
+      @previousUrlArray=File.open(path, 'r').read      
+    end
   end
   
   
   private
-  def pageAlreadyParsed?(url)
-    @parsedPages.include? url 
+  def logParsedPage(url, time=nil)
+    if time.nil? then time = 'notime' end
+    @parsedPages.push [url, time]
+    unless @logOutput.nil?
+      if time.nil? then time='notime' end 
+      data = [url, time]
+      @logOutput.write(data)
+      if @directOutputLogging then puts data end
+    end
+  end
+  
+
+  
+  private
+  def pageAlreadyParsed?(url)   
+    # puts 'previous log'
+    # puts @previousUrlLog
+    if @parsedPages.include?(url) then return 1 end
+    if !@previousUrlArray.nil? and @previousUrlArray.include?(url) then
+      return 1
+    end
+    return nil
   end
   
   public
@@ -120,6 +170,7 @@ class Retriever
   
   private
   def parseLanguagesPages
+    comienzo = Time.now
      @languages.each{|lang|
         @page = setLanguage(lang)
         @currentLanguage = lang
@@ -133,9 +184,9 @@ class Retriever
       end
       @dataArray.each_pair{|key,row| @output.write(row) }     
       @dataArray={}
-      logParsedPage(@url.url) 
-  end
-  
+      final = Time.now
+      logParsedPage(@url.url, final-comienzo)
+  end  
   
   public
   def addElements(elementCss, elementsPerPage=nil)
@@ -150,30 +201,31 @@ class Retriever
     if @page.nil? then raise 'primero hay que parsear la pagina' end
     if @elements.nil? then raise 'primero hay que definir elementos a parsear con getElements' end
     @elements.each{|element|
-      # puts 'buscando elemento en parseElements:'
-      # puts value
-      found = @page.search(element[0])
+      # elment[0] contiene nombre (css path) de elemento
+      found = @page.search(element[0])     
       if found.length>0
-          if found.length>1
-            # puts 'found mayor que 1'
-            # puts found.length
-          end
-        for i in 1..element[1] do
-            # puts 'llamando geElementData con:'
-            # puts found[0].to_s.slice(0,100)
+        # element es un array que contiene element css path en [0] y numero de elems en [1]
+        if element[1]>1
+          # buscamos el mismo elemento i num de veces
+          for i in 1..element[1] do
             getElementData(found[0])
+          end
+        else
+          getElementData(found[0])       
         end
       end
     } 
-    # guardamos lo encontrado, reseteamos array de datos y guardamos log de url
-    #   comprobamos si la misma pagina tiene links para follow
-    checkLinksToFollow
   end
 
 # overloaded en subclases especificas para cada web
   private
   def getElementData(element)
-    @dataArray.push element.inner_text
+    data = element.inner_text.to_s
+    if data.nil? or data.length==0
+      data = element.inner_html.to_s
+    end
+    @dataArray[@url.url] =  data
+    puts data
   end
   
   public
@@ -207,7 +259,7 @@ class Retriever
   
   private 
   def followLink(link)  
-    # print link
+    puts 'link to follow: ' + link
     parsePage(@url.getNewDomainUrl(link.inner_text))
   end
   

@@ -13,6 +13,5 @@ class RetrieverTest < Test::Unit::TestCase
 
   end
   
- 
-  
+
 end
