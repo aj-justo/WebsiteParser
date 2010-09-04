@@ -139,6 +139,8 @@ class Osculati < Retriever
         if e.to_s.include? @string_a_buscar
           puts 'modelo encontrado, guardado de imagen'
           super
+        else 
+          return nil
         end
       end
     end
@@ -323,6 +325,29 @@ class Osculati < Retriever
 #    form.add_field!('submit', '1')
     # debugger
      @agent.submit(form)
+  end
+  
+  # sobreescribimos metodo para adaptarlo a buscar imagenes sueltas
+  # saltando a siguiente url si encuentra elementos
+  private
+  def parseElements
+    if @page.nil? then raise 'primero hay que parsear la pagina' end
+    if @elements.nil? then raise 'primero hay que definir elementos a parsear con getElements' end
+    @elements.each{|element|
+      # elment[0] contiene nombre (css path) de elemento
+      found = @page.search(element[0])     
+      if found.length>0
+        # element es un array que contiene element css path en [0] y numero de elems en [1]
+        if element[1]>1
+          # buscamos el mismo elemento i num de veces
+          for i in 1..element[1] do
+            unless getElementData(found[0]).nil? then break end
+          end
+        else
+          getElementData(found[0])       
+        end
+      end
+    } 
   end
   
 end

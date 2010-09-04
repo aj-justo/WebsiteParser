@@ -224,8 +224,13 @@ class Retriever
     if data.nil? or data.length==0
       data = element.inner_html.to_s
     end
-    @dataArray[@url.url] =  data
+    if @string_a_buscar.nil? then
+      @dataArray[@url.url] =  data
+    else
+      @dataArray[@string_a_buscar] = data
+    end
     puts data
+    return 1
   end
   
   public

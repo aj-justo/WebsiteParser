@@ -1,12 +1,12 @@
 require 'csvProcess.rb'
 
-nombresCats = ProcessCSV.new('/Users/angeljusto/Desktop/osculati_importaciones_productos/osculati_todo_limpio__clean.csv', '|')
+nombresCats = ProcessCSV.new('/Users/angeljusto/PROYECTOS_A/lanautica/insercion_masiva_productos/OSCULATI/OSCULATI_OK/osculati_importaciones_productos/osculati_todo_limpio__clean.csv', '|')
 # idsCats = ProcessCSV.new('/Users/angeljusto/Desktop/categories_table_listo_insercion.csv', '|')
 
 
-catsNames = nombresCats.makeHash(3,1)
+catsNames = nombresCats.makeHash(13,1)
 
-subcatsNames = nombresCats.makeHash(5,2)
+subcatsNames = nombresCats.makeHash(15,2)
 
 subcatsNames.merge!(catsNames)
 
@@ -22,4 +22,4 @@ end
 
 
 # puts categorias.inspect	
-nombresCats.writeNewCSV('/Users/angeljusto/Desktop/osculati_nuevas_categorias_frances.csv')
+nombresCats.writeNewCSV('/Users/angeljusto/Desktop/osculati_nuevas_categorias_italian.csv')
