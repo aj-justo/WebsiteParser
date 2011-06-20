@@ -4,28 +4,24 @@ require 'csvOutput.rb'
 
 
 
-url = Url.new('http://www.osculati.com/cat/MainCat.aspx')
-# url = Url.new('http://www.osculati.com/cat/Serieweb.aspx?id=13563')
+url = Url.new('http://www.ajweb.eu')
 
-retriever = Osculati.new( CsvOutput.new('/Users/angeljusto/Desktop/OSCULATI/osculati.csv'))
-retriever.addLanguage('ctl00$lbFR')
-retriever.addLanguage('ctl00$lbEN')
-retriever.addLanguage('ctl00$lbIT')
+retriever = Osculati.new( CsvOutput.new('/path/to/csvfile.csv')) # needs to be created
 
-# parseamos primero la tabla de productos individuales para poder añadir luego los compartidos por todos
+# as get or post parameters
+retriever.addLanguage('es')
+retriever.addLanguage('en')
+
+# elements to be retrieved, identified by css hooks
 retriever.addElements('table.tabdati',1)
-retriever.addElements('p.titoloSerie',1)
-retriever.addElements('p.descrizioneSerie',1)
 
-retriever.addFollow('.sottogruppo a') # categorias
-retriever.addFollow('table.risultati td a') # subcategorias
+retriever.addFollow('nav#master ul li a') 
 
-retriever.urlsWithNoElements = ['http://www.osculati.com/cat/MainCat.aspx', '%Serieweb.aspx?%']
+# urls that we already know we don't need to follow
+retriever.urlsWithNoElements = ['http://ajweb.eu/contact']
 
-retriever.logOutput = CsvOutput.new('/Users/angeljusto/Desktop/OSCULATI/osculati_log.csv')
-retriever.previousUrlLog('/Users/angeljusto/Desktop/OSCULATI/Log_ultimo_ok.csv')
+retriever.logOutput = CsvOutput.new('/path/to/log/csvfile.csv')
+retriever.previousUrlLog('path/to/log/file.csv')
 retriever.directOutputLogging = true
+
 retriever.parsePage(url)
-puts retriever.getParsedPages.inspect
-
-

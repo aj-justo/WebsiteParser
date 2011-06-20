@@ -29,4 +29,4 @@ class RemoveDuplicates
   
 end
 
-RemoveDuplicates.new('/Users/angeljusto/Desktop/OSCULATI_OK/osculati_20988_end.csv')
+RemoveDuplicates.new('/path/to/new/csvfile.csv')

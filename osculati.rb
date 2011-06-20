@@ -310,18 +310,11 @@ class Osculati < Retriever
   private
   def setLanguage(language)
     page = @agent.get @url.url
-    # puts 'url en setLanguage:'
-    # puts @url.url
-#    print page.inspect
     form = page.forms.first
     form.__EVENTTARGET = language
     form.__EVENTARGUMENT = ''
     form.__VIEWSTATE = form.__VIEWSTATE
-    # form.__EVENTVALIDATION = form.__EVENTVALIDATION
-#      form.securityToken = form.securityToken
-#    form.add_field!('submit', '1')
-    # debugger
-     @agent.submit(form)
+    @agent.submit(form)
   end
   
   # sobreescribimos metodo para adaptarlo a buscar imagenes sueltas
